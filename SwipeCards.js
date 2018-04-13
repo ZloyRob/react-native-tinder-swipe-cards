@@ -11,8 +11,10 @@ import {
   Animated,
   PanResponder,
   Dimensions,
-  Image
-} from 'react-native';
+  Image,
+  BackHandler,
+  Platform
+} from 'react-native'
 
 import clamp from 'clamp';
 
@@ -88,6 +90,7 @@ export default class SwipeCards extends Component {
     stackOffsetX: PropTypes.number,
     stackOffsetY: PropTypes.number,
     renderNoMoreCards: PropTypes.func,
+    backPressToBack: PropTypes.bool,
     showYup: PropTypes.bool,
     showMaybe: PropTypes.bool,
     showNope: PropTypes.bool,
@@ -118,6 +121,7 @@ export default class SwipeCards extends Component {
     stackDepth: 5,
     stackOffsetX: 25,
     stackOffsetY: 0,
+    backPressToBack: true,
     showYup: true,
     showMaybe: true,
     showNope: true,
@@ -127,7 +131,7 @@ export default class SwipeCards extends Component {
     nopeText: "Nope!",
     maybeText: "Maybe!",
     yupText: "Yup!",
-    onClickHandler: () => { alert('tap') },
+    onClickHandler: () => {},
     onDragStart: () => {},
     onDragRelease: () => {},
     cardRemoved: (ix) => null,
@@ -244,11 +248,11 @@ export default class SwipeCards extends Component {
     });
   }
 
-  _forceLeftSwipe() {
+  _forceLeftSwipe(isNext = true) {
     this.cardAnimation = Animated.timing(this.state.pan, {
       toValue: { x: -500, y: 0 },
     }).start(status => {
-      if (status.finished) this._advanceState();
+      if (status.finished) this._advanceState(isNext);
       else this._resetState();
 
       this.cardAnimation = null;
@@ -315,7 +319,16 @@ export default class SwipeCards extends Component {
   }
 
   componentDidMount() {
+    if (Platform.OS === 'android' && this.props.backPressToBack) {
+      BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
+    }
     this._animateEntrance();
+  }
+
+  componentWillUnmount() {
+    if (Platform.OS === 'android' && this.props.backPressToBack) {
+      BackHandler.removeEventListener('hardwareBackPress', this.handleBackPress);
+    }
   }
 
   _animateEntrance() {
@@ -354,11 +367,11 @@ export default class SwipeCards extends Component {
     this._animateEntrance();
   }
 
-  _advanceState() {
+  _advanceState(isNext = true) {
     this.state.pan.setValue({ x: 0, y: 0 });
     this.state.enter.setValue(0);
     this._animateEntrance();
-    this._goToNextCard();
+    isNext ? this._goToNextCard() : this._goToPrevCard();
   }
 
   /**
@@ -366,6 +379,14 @@ export default class SwipeCards extends Component {
    */
   getCurrentCard() {
       return this.state.cards[currentIndex[this.guid]];
+  }
+
+  handleBackPress = () => {
+    if (currentIndex[this.guid] !== 0) {
+      this._forceLeftSwipe(false);
+    }
+
+    return true;
   }
 
   renderNoMoreCards() {
