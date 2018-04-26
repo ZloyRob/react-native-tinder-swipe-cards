@@ -131,9 +131,9 @@ export default class SwipeCards extends Component {
     showYup: true,
     showMaybe: true,
     showNope: true,
-    handleYup: (card) => null,
-    handleMaybe: (card) => null,
-    handleNope: (card) => null,
+    handleYup: (card, type) => null,
+    handleMaybe: (card, type) => null,
+    handleNope: (card, type) => null,
     handleBack: (currentCard, previousCard) => null,
     nopeText: "Nope!",
     maybeText: "Maybe!",
@@ -219,11 +219,11 @@ export default class SwipeCards extends Component {
           const hasMovedUp = hasSwipedVertically && this.state.pan.y._value < 0
 
           if (hasMovedRight) {
-            cancelled = this.props.handleYup(this.state.card);
+            cancelled = this.props.handleYup(this.state.card, 'swipe');
           } else if (hasMovedLeft) {
-            cancelled = this.props.handleNope(this.state.card);
+            cancelled = this.props.handleNope(this.state.card, 'swipe');
           } else if (hasMovedUp && this.props.hasMaybeAction) {
-            cancelled = this.props.handleMaybe(this.state.card);
+            cancelled = this.props.handleMaybe(this.state.card, 'swipe');
           } else {
             cancelled = true
           }
@@ -275,7 +275,7 @@ export default class SwipeCards extends Component {
     }
       );
 
-    this.props.handleNope(this.state.card);
+    this.props.handleNope(this.state.card, 'button');
   }
 
   _forceUpSwipe() {
@@ -291,7 +291,7 @@ export default class SwipeCards extends Component {
       this.cardAnimation = null;
     }
       );
-    this.props.handleMaybe(this.state.card);
+    this.props.handleMaybe(this.state.card, 'button');
   }
 
   _forceRightSwipe() {
@@ -307,7 +307,7 @@ export default class SwipeCards extends Component {
       this.cardAnimation = null;
     }
       );
-    this.props.handleYup(this.state.card);
+    this.props.handleYup(this.state.card, 'button');
   }
 
   addCard(index, element) {
