@@ -240,7 +240,7 @@ export default class SwipeCards extends Component {
           } else {
             this.cardAnimation = Animated.decay(this.state.pan, {
               velocity: { x: velocity, y: vy },
-              deceleration: 0.1
+              deceleration: 0.98
             });
             this.cardAnimation.start(status => {
               if (status.finished) {
