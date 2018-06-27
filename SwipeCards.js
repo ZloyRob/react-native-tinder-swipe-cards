@@ -341,6 +341,10 @@ export default class SwipeCards extends Component {
   turnOffAnimation() {
     this.state.makeAnimation = false
   }
+  
+  manualSwipeCard() {
+    this._forceRightSwipe()
+  }
 
   _goToNextCard () {
     currentIndex[this.guid]++
