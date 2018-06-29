@@ -161,9 +161,10 @@ export default class SwipeCards extends Component {
 
     this.state = {
       pan: new Animated.ValueXY(0),
-      enter: new Animated.Value(0.5),
+      enter: new Animated.Value(0.01),
       cards: [].concat(this.props.cards),
       card: this.props.cards[currentIndex[this.guid]],
+      makeAnimation: true
     }
 
     this.lastX = 0
@@ -337,6 +338,14 @@ export default class SwipeCards extends Component {
     }
   }
 
+  turnOffAnimation() {
+    this.state.makeAnimation = false
+  }
+  
+  manualSwipeCard() {
+    this._forceRightSwipe()
+  }
+
   _goToNextCard () {
     currentIndex[this.guid]++
 
@@ -354,7 +363,7 @@ export default class SwipeCards extends Component {
 
   _goToPrevCard () {
     this.state.pan.setValue({x: 0, y: 0})
-    this.state.enter.setValue(0)
+    this.state.enter.setValue(0.01)
     this._animateEntrance()
 
     currentIndex[this.guid]--
@@ -413,15 +422,20 @@ export default class SwipeCards extends Component {
 
   _resetState () {
     this.state.pan.setValue({x: 0, y: 0})
-    this.state.enter.setValue(0)
+    this.state.enter.setValue(0.01)
     this._animateEntrance()
   }
 
   _advanceState (isNext = true) {
     this.props.handleBeforeCardRemove(this.getNextCard())
     this.state.pan.setValue({x: 0, y: 0})
-    this.state.enter.setValue(0)
-    this._animateEntrance()
+    if (this.state.makeAnimation) {
+      this.state.enter.setValue(0.01)
+      this._animateEntrance()
+    } else {
+      this.state.enter.setValue(1)
+      this.setState({makeAnimation: true})
+    }
     isNext ? this._goToNextCard() : this._goToPrevCard()
   }
 
