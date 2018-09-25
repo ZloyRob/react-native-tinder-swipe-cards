@@ -114,7 +114,6 @@ export default class SwipeCards extends Component {
     cardRemoved: PropTypes.func,
     dragY: PropTypes.bool,
     smoothTransition: PropTypes.bool,
-    disableBackButton: PropTypes.bool,
     disableYupButton: PropTypes.bool,
     disableNopeButton: PropTypes.bool,
     disableMaybeButton: PropTypes.bool,
@@ -154,7 +153,6 @@ export default class SwipeCards extends Component {
     style: styles.container,
     dragY: true,
     smoothTransition: false,
-    disableBackButton: false,
     disableYupButton: false,
     disableNopeButton: false,
     disableMaybeButton: false,
@@ -685,7 +683,7 @@ export default class SwipeCards extends Component {
   renderBackButton () {
     if (this.props.renderBackButton) {
       return (
-        <TouchableOpacity style={this.props.backButtonStyle} disabled={this.props.disableBackButton} onPress={() => this.handleBackPress()}>
+        <TouchableOpacity style={currentIndex[this.guid] === 0 ? [this.props.backButtonStyle, {opacity: 0.3}] : this.props.backButtonStyle} disabled={currentIndex[this.guid] === 0} onPress={() => this.handleBackPress()}>
           {this.props.renderBackButton()}
         </TouchableOpacity>
       )
