@@ -683,7 +683,7 @@ export default class SwipeCards extends Component {
   renderBackButton () {
     if (this.props.renderBackButton) {
       return (
-        <TouchableOpacity style={currentIndex[this.guid] === 0 ? [this.props.backButtonStyle, {opacity: 0.3}] : this.props.backButtonStyle} disabled={currentIndex[this.guid] === 0} onPress={() => this.handleBackPress()}>
+        <TouchableOpacity style={currentIndex[this.guid] === 0 ? this.props.disabledBackButtonStyle : this.props.backButtonStyle} disabled={currentIndex[this.guid] === 0} onPress={() => this.handleBackPress()}>
           {this.props.renderBackButton()}
         </TouchableOpacity>
       )
