@@ -113,7 +113,10 @@ export default class SwipeCards extends Component {
     renderNope: PropTypes.func,
     cardRemoved: PropTypes.func,
     dragY: PropTypes.bool,
-    smoothTransition: PropTypes.bool
+    smoothTransition: PropTypes.bool,
+    disableYupButton: PropTypes.bool,
+    disableNopeButton: PropTypes.bool,
+    disableMaybeButton: PropTypes.bool,
   }
 
   static defaultProps = {
@@ -149,7 +152,10 @@ export default class SwipeCards extends Component {
     renderNopeButton: () => null,
     style: styles.container,
     dragY: true,
-    smoothTransition: false
+    smoothTransition: false,
+    disableYupButton: false,
+    disableNopeButton: false,
+    disableMaybeButton: false,
   }
 
   constructor (props) {
@@ -588,7 +594,7 @@ export default class SwipeCards extends Component {
   renderNopeButton () {
     if (this.props.renderNopeButton) {
       return (
-        <TouchableOpacity style={this.props.nopeButtonStyle} onPress={() => this._forceLeftSwipe()}>
+        <TouchableOpacity style={this.props.nopeButtonStyle} disabled={this.props.disableNopeButton} onPress={() => this._forceLeftSwipe()}>
           {this.props.renderNopeButton()}
         </TouchableOpacity>
       )
@@ -630,7 +636,7 @@ export default class SwipeCards extends Component {
   renderMaybeButton () {
     if (this.props.renderMaybeButton) {
       return (
-        <TouchableOpacity style={this.props.maybeButtonStyle} onPress={() => this._forceLeftSwipe()}>
+        <TouchableOpacity style={this.props.maybeButtonStyle} disabled={this.props.disableMaybeButton} onPress={() => this._forceLeftSwipe()}>
           {this.props.renderMaybeButton()}
         </TouchableOpacity>
       )
@@ -666,7 +672,7 @@ export default class SwipeCards extends Component {
   renderYupButton () {
     if (this.props.renderYupButton) {
       return (
-        <TouchableOpacity style={this.props.yupButtonStyle} onPress={() => this._forceRightSwipe()}>
+        <TouchableOpacity style={this.props.yupButtonStyle} disabled={this.props.disableYupButton} onPress={() => this._forceRightSwipe()}>
           {this.props.renderYupButton()}
         </TouchableOpacity>
       )
@@ -677,7 +683,7 @@ export default class SwipeCards extends Component {
   renderBackButton () {
     if (this.props.renderBackButton) {
       return (
-        <TouchableOpacity style={this.props.backButtonStyle} onPress={() => this.handleBackPress()}>
+        <TouchableOpacity style={currentIndex[this.guid] === 0 ? this.props.disabledBackButtonStyle : this.props.backButtonStyle} disabled={currentIndex[this.guid] === 0} onPress={() => this.handleBackPress()}>
           {this.props.renderBackButton()}
         </TouchableOpacity>
       )
