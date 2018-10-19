@@ -114,8 +114,6 @@ export default class SwipeCards extends Component {
     cardRemoved: PropTypes.func,
     dragY: PropTypes.bool,
     smoothTransition: PropTypes.bool,
-    disableYupButton: PropTypes.bool,
-    disableNopeButton: PropTypes.bool,
     disableMaybeButton: PropTypes.bool,
   }
 
@@ -153,8 +151,6 @@ export default class SwipeCards extends Component {
     style: styles.container,
     dragY: true,
     smoothTransition: false,
-    disableYupButton: false,
-    disableNopeButton: false,
     disableMaybeButton: false,
   }
 
@@ -240,7 +236,7 @@ export default class SwipeCards extends Component {
             this._resetPan()
             return
           }
-          
+
 
           if (this.props.smoothTransition) {
             this._advanceState()
@@ -347,7 +343,7 @@ export default class SwipeCards extends Component {
   turnOffAnimation() {
     this.state.makeAnimation = false
   }
-  
+
   manualSwipeCard() {
     this._forceRightSwipe()
   }
@@ -593,11 +589,7 @@ export default class SwipeCards extends Component {
 
   renderNopeButton () {
     if (this.props.renderNopeButton) {
-      return (
-        <TouchableOpacity style={this.props.nopeButtonStyle} disabled={this.props.disableNopeButton} onPress={() => this._forceLeftSwipe()}>
-          {this.props.renderNopeButton()}
-        </TouchableOpacity>
-      )
+      return this.props.renderNopeButton()
     }
     return null
   }
@@ -671,24 +663,15 @@ export default class SwipeCards extends Component {
 
   renderYupButton () {
     if (this.props.renderYupButton) {
-      return (
-        <TouchableOpacity style={this.props.yupButtonStyle} disabled={this.props.disableYupButton} onPress={() => this._forceRightSwipe()}>
-          {this.props.renderYupButton()}
-        </TouchableOpacity>
-      )
+      return this.props.renderYupButton()
     }
     return null
   }
 
   renderBackButton () {
     if (this.props.renderBackButton) {
-      return (
-        <TouchableOpacity style={currentIndex[this.guid] === 0 ? this.props.disabledBackButtonStyle : this.props.backButtonStyle} disabled={currentIndex[this.guid] === 0} onPress={() => this.handleBackPress()}>
-          {this.props.renderBackButton()}
-        </TouchableOpacity>
-      )
+      return this.props.renderBackButton()
     }
-    return null
   }
 
   render () {
