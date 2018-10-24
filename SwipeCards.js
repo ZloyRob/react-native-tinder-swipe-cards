@@ -81,7 +81,9 @@ export default class SwipeCards extends Component {
   static propTypes = {
     cards: PropTypes.array,
     cardKey: PropTypes.string,
-    hasMaybeAction: PropTypes.bool,
+    hasMaybeAction: PropTypes.func,
+    hasYupAction: PropTypes.func,
+    hasNopeAction: PropTypes.func,
     loop: PropTypes.bool,
     onLoop: PropTypes.func,
     allowGestureTermination: PropTypes.bool,
@@ -114,15 +116,16 @@ export default class SwipeCards extends Component {
     cardRemoved: PropTypes.func,
     dragY: PropTypes.bool,
     smoothTransition: PropTypes.bool,
-    disableYupButton: PropTypes.bool,
-    disableNopeButton: PropTypes.bool,
     disableMaybeButton: PropTypes.bool,
+    startingRotationAngle: PropTypes.func
   }
 
   static defaultProps = {
     cards: [],
     cardKey: 'key',
-    hasMaybeAction: false,
+    hasMaybeAction: () => false,
+    hasYupAction: () => true,
+    hasNopeAction: () => true,
     loop: false,
     onLoop: () => null,
     allowGestureTermination: true,
@@ -153,9 +156,8 @@ export default class SwipeCards extends Component {
     style: styles.container,
     dragY: true,
     smoothTransition: false,
-    disableYupButton: false,
-    disableNopeButton: false,
     disableMaybeButton: false,
+    startingRotationAngle: () => 0,
   }
 
   constructor (props) {
@@ -217,7 +219,7 @@ export default class SwipeCards extends Component {
 
         const hasSwipedHorizontally = Math.abs(this.state.pan.x._value) > SWIPE_THRESHOLD
         const hasSwipedVertically = Math.abs(this.state.pan.y._value) > SWIPE_THRESHOLD
-        if (hasSwipedHorizontally || (hasSwipedVertically && this.props.hasMaybeAction)) {
+        if (hasSwipedHorizontally || (hasSwipedVertically && this.props.hasMaybeAction())) {
 
           let cancelled = false
 
@@ -225,11 +227,11 @@ export default class SwipeCards extends Component {
           const hasMovedLeft = hasSwipedHorizontally && this.state.pan.x._value < 0
           const hasMovedUp = hasSwipedVertically && this.state.pan.y._value < 0
 
-          if (hasMovedRight) {
+          if (hasMovedRight && this.props.hasYupAction()) {
             cancelled = this.props.handleYup(this.state.card, 'swipe')
-          } else if (hasMovedLeft) {
+          } else if (hasMovedLeft && this.props.hasNopeAction()) {
             cancelled = this.props.handleNope(this.state.card, 'swipe')
-          } else if (hasMovedUp && this.props.hasMaybeAction) {
+          } else if (hasMovedUp && this.props.hasMaybeAction()) {
             cancelled = this.props.handleMaybe(this.state.card, 'swipe')
           } else {
             cancelled = true
@@ -240,7 +242,6 @@ export default class SwipeCards extends Component {
             this._resetPan()
             return
           }
-          
 
           if (this.props.smoothTransition) {
             this._advanceState()
@@ -347,7 +348,7 @@ export default class SwipeCards extends Component {
   turnOffAnimation() {
     this.state.makeAnimation = false
   }
-  
+
   manualSwipeCard() {
     this._forceRightSwipe()
   }
@@ -554,7 +555,7 @@ export default class SwipeCards extends Component {
     let {pan, enter} = this.state
     let [translateX, translateY] = [pan.x, pan.y]
 
-    let rotate = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: ['-30deg', '0deg', '30deg']})
+    let rotate = pan.x.interpolate({inputRange: [-200, this.props.startingRotationAngle(), 200], outputRange: ['-30deg', '0deg', '30deg']})
     let opacity = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: [0.5, 1, 0.5]})
 
     let scale = enter
@@ -567,6 +568,7 @@ export default class SwipeCards extends Component {
   }
 
   renderNope () {
+    if (!this.props.hasNopeAction()) return null
     let {pan} = this.state
 
     let nopeOpacity = pan.x.interpolate({
@@ -593,17 +595,13 @@ export default class SwipeCards extends Component {
 
   renderNopeButton () {
     if (this.props.renderNopeButton) {
-      return (
-        <TouchableOpacity style={this.props.nopeButtonStyle} disabled={this.props.disableNopeButton} onPress={() => this._forceLeftSwipe()}>
-          {this.props.renderNopeButton()}
-        </TouchableOpacity>
-      )
+      return this.props.renderNopeButton()
     }
     return null
   }
 
   renderMaybe () {
-    if (!this.props.hasMaybeAction) return null
+    if (!this.props.hasMaybeAction()) return null
 
     let {pan} = this.state
 
@@ -645,6 +643,7 @@ export default class SwipeCards extends Component {
   }
 
   renderYup () {
+    if (!this.props.hasYupAction()) return null
     let {pan} = this.state
 
     let yupOpacity = pan.x.interpolate({
@@ -671,24 +670,15 @@ export default class SwipeCards extends Component {
 
   renderYupButton () {
     if (this.props.renderYupButton) {
-      return (
-        <TouchableOpacity style={this.props.yupButtonStyle} disabled={this.props.disableYupButton} onPress={() => this._forceRightSwipe()}>
-          {this.props.renderYupButton()}
-        </TouchableOpacity>
-      )
+      return this.props.renderYupButton()
     }
     return null
   }
 
   renderBackButton () {
     if (this.props.renderBackButton) {
-      return (
-        <TouchableOpacity style={currentIndex[this.guid] === 0 ? this.props.disabledBackButtonStyle : this.props.backButtonStyle} disabled={currentIndex[this.guid] === 0} onPress={() => this.handleBackPress()}>
-          {this.props.renderBackButton()}
-        </TouchableOpacity>
-      )
+      return this.props.renderBackButton()
     }
-    return null
   }
 
   render () {
