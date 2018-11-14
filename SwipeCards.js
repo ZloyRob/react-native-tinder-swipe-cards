@@ -322,6 +322,13 @@ export default class SwipeCards extends Component {
     this.props.handleYup(this.state.card, 'button')
   }
 
+  addCards (newCards) {
+    let cards = this.state.cards.slice()
+    this.setState({
+      cards: cards.concat(newCards)
+    })
+  }
+
   addCard (index, element) {
     const cards = this.state.cards.slice()
     cards.splice(index, 0, element)
