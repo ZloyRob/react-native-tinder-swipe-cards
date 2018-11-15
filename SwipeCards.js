@@ -14,7 +14,7 @@ import {
   Image,
   BackHandler,
   Platform,
-  TouchableOpacity
+  TouchableOpacity, InteractionManager
 } from 'react-native'
 
 import clamp from 'clamp'
@@ -93,6 +93,7 @@ export default class SwipeCards extends Component {
     stackOffsetX: PropTypes.number,
     stackOffsetY: PropTypes.number,
     renderNoMoreCards: PropTypes.func,
+    loadMoreCard: PropTypes.func,
     backPressToBack: PropTypes.bool,
     showYup: PropTypes.bool,
     showMaybe: PropTypes.bool,
@@ -249,7 +250,8 @@ export default class SwipeCards extends Component {
           } else {
             this.cardAnimation = Animated.decay(this.state.pan, {
               velocity: {x: velocity, y: vy},
-              deceleration: 0.85
+              deceleration: 0.85,
+              useNativeDriver:true
             })
             this.cardAnimation.start(status => {
                 if (status.finished) {
@@ -273,7 +275,8 @@ export default class SwipeCards extends Component {
   _forceLeftSwipe (isNext = true) {
     this.cardAnimation = Animated.timing(this.state.pan, {
       toValue: {x: -500, y: 0},
-      duration: 350
+      duration: 350,
+      useNativeDriver:true
     }).start(status => {
         if (status.finished) {
           this._advanceState()
@@ -291,7 +294,8 @@ export default class SwipeCards extends Component {
   _forceUpSwipe () {
     this.cardAnimation = Animated.timing(this.state.pan, {
       toValue: {x: 0, y: 500},
-      duration: 350
+      duration: 350,
+      useNativeDriver:true
     }).start(status => {
         if (status.finished) {
           this._advanceState()
@@ -308,7 +312,8 @@ export default class SwipeCards extends Component {
   _forceRightSwipe () {
     this.cardAnimation = Animated.timing(this.state.pan, {
       toValue: {x: 500, y: 0},
-      duration: 350
+      duration: 350,
+      useNativeDriver:true
     }).start(status => {
         if (status.finished) {
           this._advanceState()
@@ -375,6 +380,21 @@ export default class SwipeCards extends Component {
     })
   }
 
+  _goToCurrentCard () {
+    currentIndex[this.guid]
+
+    // Checks to see if last card.
+    // If props.loop=true, will start again from the first card.
+    if (currentIndex[this.guid] > this.state.cards.length - 1 && this.props.loop) {
+      this.props.onLoop()
+      currentIndex[this.guid] = 0
+    }
+
+    this.setState({
+      card: this.state.cards[currentIndex[this.guid]]
+    })
+  }
+
   _goToPrevCard () {
     this.state.pan.setValue({x: 0, y: 0})
     this.state.enter.setValue(0.01)
@@ -407,7 +427,7 @@ export default class SwipeCards extends Component {
   _animateEntrance () {
     Animated.spring(
       this.state.enter,
-      {toValue: 1, friction: 12}
+      {toValue: 1, friction: 12, useNativeDriver:true}
     ).start()
   }
 
@@ -430,7 +450,8 @@ export default class SwipeCards extends Component {
   _resetPan () {
     Animated.spring(this.state.pan, {
       toValue: {x: 0, y: 0},
-      friction: 12
+      friction: 12,
+      useNativeDriver:true
     }).start()
   }
 
@@ -457,6 +478,10 @@ export default class SwipeCards extends Component {
     return currentIndex[this.guid]
   }
 
+  getCardCount () {
+    return this.state.cards.length
+  }
+
   getNextCard () {
     return this.state.cards[currentIndex[this.guid] + 1]
   }
@@ -476,6 +501,12 @@ export default class SwipeCards extends Component {
     }
 
     return true
+  }
+
+  async loadMoreCard () {
+    if (this.props.loadMoreCard) {
+      await this.props.loadMoreCard()
+    }
   }
 
   renderNoMoreCards () {
@@ -555,23 +586,32 @@ export default class SwipeCards extends Component {
   }
 
   renderCard () {
-    if (!this.state.card) {
-      return this.renderNoMoreCards()
+    if (this.getCardCount() - this.getCurrentIndex() === 1) {
+    InteractionManager.runAfterInteractions(() => {
+      this.loadMoreCard()
+    })
     }
+      if (!this.state.card) {
+        return this.renderNoMoreCards()
+      }
 
-    let {pan, enter} = this.state
-    let [translateX, translateY] = [pan.x, pan.y]
+      let {pan, enter} = this.state
+      let [translateX, translateY] = [pan.x, pan.y]
 
-    let rotate = pan.x.interpolate({inputRange: [-200, this.props.startingRotationAngle(), 200], outputRange: ['-30deg', '0deg', '30deg']})
-    let opacity = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: [0.5, 1, 0.5]})
+      let rotate = pan.x.interpolate({
+        inputRange: [-200, this.props.startingRotationAngle(), 200],
+        outputRange: ['-30deg', '0deg', '30deg']
+      })
+      let opacity = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: [0.5, 1, 0.5]})
 
-    let scale = enter
+      let scale = enter
 
-    let animatedCardStyles = {transform: [{translateX}, {translateY}, {rotate}, {scale}], opacity}
+      let animatedCardStyles = {transform: [{translateX}, {translateY}, {rotate}, {scale}], opacity}
 
-    return <Animated.View key={'top'} style={[styles.card, animatedCardStyles]} {...this._panResponder.panHandlers}>
-      {this.props.renderCard(this.state.card, this.getNextCard())}
-    </Animated.View>
+      return <Animated.View key={'top'} style={[styles.card, animatedCardStyles]} {...this._panResponder.panHandlers}>
+        {this.props.renderCard(this.state.card, this.getNextCard())}
+      </Animated.View>
+
   }
 
   renderNope () {
