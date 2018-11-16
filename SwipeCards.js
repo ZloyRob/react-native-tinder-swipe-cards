@@ -272,6 +272,10 @@ export default class SwipeCards extends Component {
     })
   }
 
+  clearAddedCount() {
+    this.countOfLastLoadCard = 0
+  }
+
   _forceLeftSwipe (isNext = true) {
     this.cardAnimation = Animated.timing(this.state.pan, {
       toValue: {x: -500, y: 0},
