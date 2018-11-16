@@ -167,7 +167,7 @@ export default class SwipeCards extends Component {
     //Use a persistent variable to track currentIndex instead of a local one.
     this.guid = this.props.guid || guid++
     if (!currentIndex[this.guid]) currentIndex[this.guid] = 0
-
+    this.countOfLastLoadCard = 0
     this.state = {
       pan: new Animated.ValueXY(0),
       enter: new Animated.Value(0.01),
@@ -586,10 +586,11 @@ export default class SwipeCards extends Component {
   }
 
   renderCard () {
-    if (this.getCardCount() - this.getCurrentIndex() === 1) {
-    InteractionManager.runAfterInteractions(() => {
-      this.loadMoreCard()
-    })
+    if (this.getCardCount() - this.getCurrentIndex() === 2 && this.getCardCount()!==this.countOfLastLoadCard) {
+      this.countOfLastLoadCard = this.getCardCount()
+      InteractionManager.runAfterInteractions(() => {
+        this.loadMoreCard()
+      })
     }
       if (!this.state.card) {
         return this.renderNoMoreCards()
