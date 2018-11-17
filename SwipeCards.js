@@ -466,7 +466,7 @@ export default class SwipeCards extends Component {
   }
 
   _advanceState (isNext = true) {
-    this.props.handleBeforeCardRemove(this.getNextCard())
+    this.props.handleBeforeCardRemove(this.getNextCard(), isNext)
     this.state.pan.setValue({x: 0, y: 0})
     if (this.state.makeAnimation) {
       this.state.enter.setValue(0.01)
@@ -590,7 +590,7 @@ export default class SwipeCards extends Component {
   }
 
   renderCard () {
-    if (this.getCardCount() - this.getCurrentIndex() === 2 && this.getCardCount()!==this.countOfLastLoadCard) {
+    if (this.getCardCount() - this.getCurrentIndex() <= 2 && this.getCardCount()!==this.countOfLastLoadCard) {
       this.countOfLastLoadCard = this.getCardCount()
       InteractionManager.runAfterInteractions(() => {
         this.loadMoreCard()
