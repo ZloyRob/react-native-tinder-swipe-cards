@@ -22,6 +22,7 @@ import clamp from 'clamp'
 import Defaults from './Defaults.js'
 
 const viewport = Dimensions.get('window')
+const SCREEN_WIDTH = Dimensions.get('window').width;
 const SWIPE_THRESHOLD = 120
 
 const styles = StyleSheet.create({
@@ -170,106 +171,91 @@ export default class SwipeCards extends Component {
     this.countOfLastLoadCard = 0
     this.state = {
       pan: new Animated.ValueXY(0),
+      Xposition: new Animated.Value(0),
       enter: new Animated.Value(0.01),
       cards: [].concat(this.props.cards),
       card: this.props.cards[currentIndex[this.guid]],
       makeAnimation: true
     }
-
+    this.CardView_Opacity = new Animated.Value(1);
     this.lastX = 0
     this.lastY = 0
 
     this.cardAnimation = null
 
-    this._panResponder = PanResponder.create({
-      onMoveShouldSetPanResponderCapture: (e, gestureState) => {
-        if (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3) {
-          this.props.onDragStart()
-          return true
-        }
-        return false
-      },
+    this._panResponder = PanResponder.create(
+      {
+        onStartShouldSetPanResponder: (evt, gestureState) => false,
 
-      onPanResponderGrant: (e, gestureState) => {
-        this.state.pan.setOffset({x: this.state.pan.x._value, y: this.state.pan.y._value})
-        this.state.pan.setValue({x: 0, y: 0})
-      },
+        onMoveShouldSetPanResponder: (evt, gestureState) => true,
 
-      onPanResponderTerminationRequest: (evt, gestureState) => this.props.allowGestureTermination,
+        onStartShouldSetPanResponderCapture: (evt, gestureState) => false,
 
-      onPanResponderMove: Animated.event([
-        null, {dx: this.state.pan.x, dy: this.props.dragY ? this.state.pan.y : 0},
-      ]),
+        onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
 
-      onPanResponderRelease: (e, {vx, vy, dx, dy}) => {
-        this.props.onDragRelease()
-        this.state.pan.flattenOffset()
-        let velocity
-        if (Math.abs(dx) <= 5 && Math.abs(dy) <= 5)   //meaning the gesture did not cover any distance
+        onPanResponderMove: (evt, gestureState) =>
         {
-          this.props.onClickHandler(this.state.card)
-        }
+          this.state.Xposition.setValue(gestureState.dx);
 
-        if (vx > 0) {
-          velocity = clamp(vx, 3, 5)
-        } else if (vx < 0) {
-          velocity = clamp(vx * -1, 3, 5) * -1
-        } else {
-          velocity = dx < 0 ? -3 : 3
-        }
+      },
 
-        const hasSwipedHorizontally = Math.abs(this.state.pan.x._value) > SWIPE_THRESHOLD
-        const hasSwipedVertically = Math.abs(this.state.pan.y._value) > SWIPE_THRESHOLD
-        if (hasSwipedHorizontally || (hasSwipedVertically && this.props.hasMaybeAction())) {
-
-          let cancelled = false
-
-          const hasMovedRight = hasSwipedHorizontally && this.state.pan.x._value > 0
-          const hasMovedLeft = hasSwipedHorizontally && this.state.pan.x._value < 0
-          const hasMovedUp = hasSwipedVertically && this.state.pan.y._value < 0
-
-          if (hasMovedRight && this.props.hasYupAction()) {
-            cancelled = this.props.handleYup(this.state.card, 'swipe')
-          } else if (hasMovedLeft && this.props.hasNopeAction()) {
-            cancelled = this.props.handleNope(this.state.card, 'swipe')
-          } else if (hasMovedUp && this.props.hasMaybeAction()) {
-            cancelled = this.props.handleMaybe(this.state.card, 'swipe')
-          } else {
-            cancelled = true
+        onPanResponderRelease: (evt, gestureState) =>
+        {
+          if( gestureState.dx < SCREEN_WIDTH - 150 && gestureState.dx > -SCREEN_WIDTH + 150 )
+          {
+            Animated.spring( this.state.Xposition,
+              {
+                toValue: 0,
+                speed: 5,
+                bounciness: 10,
+              }, { useNativeDriver: true }).start();
           }
 
-          //Yup or nope was cancelled, return the card to normal.
-          if (cancelled) {
-            this._resetPan()
-            return
+          else if( gestureState.dx > SCREEN_WIDTH - 150 )
+          {
+
+            Animated.parallel(
+              [
+                Animated.timing( this.state.Xposition,
+                  {
+                    toValue: SCREEN_WIDTH,
+                    duration: 200
+                  }),
+
+                Animated.timing( this.CardView_Opacity,
+                  {
+                    toValue: 0,
+                    duration: 200
+                  })
+              ], { useNativeDriver: true }).start(() =>
+            {
+              this.props.cardRemoved(currentIndex[this.guid] - 1, this.getPreviousCard())
+            });
+
           }
+          else if( gestureState.dx < -SCREEN_WIDTH + 150 )
+          {
+            Animated.parallel(
+              [
+                Animated.timing( this.state.Xposition,
+                  {
+                    toValue: -SCREEN_WIDTH,
+                    duration: 200
+                  }),
 
-          if (this.props.smoothTransition) {
-            this._advanceState()
-            this.props.cardRemoved(currentIndex[this.guid] - 1, this.getPreviousCard())
-          } else {
-            this.cardAnimation = Animated.decay(this.state.pan, {
-              velocity: {x: velocity, y: vy},
-              deceleration: 0.85,
-              useNativeDriver:true
-            })
-            this.cardAnimation.start(status => {
-                if (status.finished) {
-                  this._advanceState()
-                  this.props.cardRemoved(currentIndex[this.guid] - 1, this.getPreviousCard())
-                }
-                else this._resetState()
-
-                this.cardAnimation = null
-              }
-            )
+                Animated.timing( this.CardView_Opacity,
+                  {
+                    toValue: 0,
+                    duration: 200
+                  })
+              ], { useNativeDriver: true }).start(() =>
+            {
+                this.props.removeCardView();
+            });
           }
-
-        } else {
-          this._resetPan()
         }
-      }
-    })
+      });
+
   }
 
   clearAddedCount() {
@@ -521,74 +507,6 @@ export default class SwipeCards extends Component {
     return <Defaults.NoMoreCards/>
   }
 
-  /**
-   * Renders the cards as a stack with props.stackDepth cards deep.
-   */
-  renderStack () {
-    if (!this.state.card) {
-      return this.renderNoMoreCards()
-    }
-
-    //Get the next stack of cards to render.
-    let cards = this.state.cards.slice(currentIndex[this.guid], currentIndex[this.guid] + this.props.stackDepth).reverse()
-
-    return cards.map((card, i) => {
-
-      let offsetX = this.props.stackOffsetX * cards.length - i * this.props.stackOffsetX
-      let lastOffsetX = offsetX + this.props.stackOffsetX
-
-      let offsetY = this.props.stackOffsetY * cards.length - i * this.props.stackOffsetY
-      let lastOffsetY = offsetY + this.props.stackOffsetY
-
-      let opacity = 0.25 + (0.75 / cards.length) * (i + 1)
-      let lastOpacity = 0.25 + (0.75 / cards.length) * i
-
-      let scale = 0.85 + (0.15 / cards.length) * (i + 1)
-      let lastScale = 0.85 + (0.15 / cards.length) * i
-
-      let style = {
-        position: 'absolute',
-        top: this.state.enter.interpolate({inputRange: [0, 1], outputRange: [lastOffsetY, offsetY]}),
-        left: this.state.enter.interpolate({inputRange: [0, 1], outputRange: [lastOffsetX, offsetX]}),
-        opacity: this.props.smoothTransition ? 1 : this.state.enter.interpolate({
-          inputRange: [0, 1],
-          outputRange: [lastOpacity, opacity]
-        }),
-        transform: [{scale: this.state.enter.interpolate({inputRange: [0, 1], outputRange: [lastScale, scale]})}],
-        elevation: i * 10
-      }
-
-      //Is this the top card?  If so animate it and hook up the pan handlers.
-      if (i + 1 === cards.length) {
-        let {pan} = this.state
-        let [translateX, translateY] = [pan.x, pan.y]
-
-        let rotate = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: ['-30deg', '0deg', '30deg']})
-        let opacity = this.props.smoothTransition ? 1 : pan.x.interpolate({
-          inputRange: [-200, 0, 200],
-          outputRange: [0.5, 1, 0.5]
-        })
-
-        let animatedCardStyles = {
-          ...style,
-          transform: [
-            {translateX: translateX},
-            {translateY: translateY},
-            {rotate: rotate},
-            {scale: this.state.enter.interpolate({inputRange: [0, 1], outputRange: [lastScale, scale]})}
-          ]
-        }
-
-        return <Animated.View key={card[this.props.cardKey]}
-                              style={[styles.card, animatedCardStyles]} {...this._panResponder.panHandlers}>
-          {this.props.renderCard(this.state.card)}
-        </Animated.View>
-      }
-
-      return <Animated.View key={card[this.props.cardKey]} style={style}>{this.props.renderCard(card)}</Animated.View>
-    })
-  }
-
   renderCard () {
     if (this.getCardCount() - this.getCurrentIndex() <= 2 && this.getCardCount()!==this.countOfLastLoadCard) {
       this.countOfLastLoadCard = this.getCardCount()
@@ -612,8 +530,18 @@ export default class SwipeCards extends Component {
       let scale = enter
 
       let animatedCardStyles = {transform: [{translateX}, {translateY}, {rotate}, {scale}], opacity}
-
-      return <Animated.View key={'top'} style={[styles.card, animatedCardStyles]} {...this._panResponder.panHandlers}>
+    const rotateCard = this.state.Xposition.interpolate(
+      {
+        inputRange: [-200, 0, 200],
+        outputRange: ['-20deg', '0deg', '20deg'],
+      })
+      return       <Animated.View {...this._panResponder.panHandlers}
+                                  style = {[
+                                    styles.card, {
+                                      opacity: this.CardView_Opacity,
+                                      transform: [{ translateX: this.state.Xposition },
+                                        { rotate: rotateCard }]}
+                                  ]}>
         {this.props.renderCard(this.state.card, this.getNextCard())}
       </Animated.View>
 
