@@ -456,7 +456,10 @@ export default class SwipeCards extends Component {
       toValue: {x: 0, y: 0},
       friction: 12,
       useNativeDriver:true
-    }).start()
+    }).start(() => {
+      this.state.pan.setOffset({x: 0, y: 0})
+      this.state.pan.setValue({x: 0, y: 0})
+    })
   }
 
   _resetState () {
@@ -592,30 +595,28 @@ export default class SwipeCards extends Component {
   renderCard () {
     if (this.getCardCount() - this.getCurrentIndex() <= 2 && this.getCardCount()!==this.countOfLastLoadCard) {
       this.countOfLastLoadCard = this.getCardCount()
-      InteractionManager.runAfterInteractions(() => {
-        this.loadMoreCard()
-      })
+      this.loadMoreCard()
     }
-      if (!this.state.card) {
-        return this.renderNoMoreCards()
-      }
+    if (!this.state.card) {
+      return this.renderNoMoreCards()
+    }
 
-      let {pan, enter} = this.state
-      let [translateX, translateY] = [pan.x, pan.y]
+    let {pan, enter} = this.state
+    let [translateX, translateY] = [pan.x, pan.y]
 
-      let rotate = pan.x.interpolate({
-        inputRange: [-200, this.props.startingRotationAngle(), 200],
-        outputRange: ['-30deg', '0deg', '30deg']
-      })
-      let opacity = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: [0.5, 1, 0.5]})
+    let rotate = pan.x.interpolate({
+      inputRange: [-200, this.props.startingRotationAngle(), 200],
+      outputRange: ['-30deg', '0deg', '30deg']
+    })
+    let opacity = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: [0.5, 1, 0.5]})
 
-      let scale = enter
+    let scale = enter
 
-      let animatedCardStyles = {transform: [{translateX}, {translateY}, {rotate}, {scale}], opacity}
+    let animatedCardStyles = {transform: [{translateX}, {translateY}, {rotate}, {scale}], opacity}
 
-      return <Animated.View key={'top'} style={[styles.card, animatedCardStyles]} {...this._panResponder.panHandlers}>
-        {this.props.renderCard(this.state.card, this.getNextCard())}
-      </Animated.View>
+    return <Animated.View key={'top'} style={[styles.card, animatedCardStyles]} {...this._panResponder.panHandlers}>
+      {this.props.renderCard(this.state.card, this.getNextCard())}
+    </Animated.View>
 
   }
 
