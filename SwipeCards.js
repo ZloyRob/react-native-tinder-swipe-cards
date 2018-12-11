@@ -595,7 +595,9 @@ export default class SwipeCards extends Component {
   renderCard () {
     if (this.getCardCount() - this.getCurrentIndex() <= 2 && this.getCardCount()!==this.countOfLastLoadCard) {
       this.countOfLastLoadCard = this.getCardCount()
-      this.loadMoreCard()
+      InteractionManager.runAfterInteractions(() => {
+        this.loadMoreCard()
+      })
     }
     if (!this.state.card) {
       return this.renderNoMoreCards()
