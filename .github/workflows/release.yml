@@ -2,7 +2,9 @@ name: "Bump Version"
 
 on:
   release:
-  create:
+    branches: 
+      - master
+        
 
 jobs:
   bump-version:
@@ -14,17 +16,6 @@ jobs:
         uses: "actions/checkout@v2"
         with:
           ref: ${{ github.ref }}
-      - name: "cat package.json"
-        run: cat ./package.json
-      - name: "Setup Node.js"
-        uses: "actions/setup-node@v1"
-        with:
-          node-version: 12
-      - name: "Automated Version Bump"
-        uses: "phips28/gh-action-bump-version@master"
-        with:
-          tag-prefix: ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: "cat package.json"
-        run: cat ./package.json
+      - name: Update version in package.json
+        uses: maks-stupak/gh-action-bump-version@v7.1.5
+
