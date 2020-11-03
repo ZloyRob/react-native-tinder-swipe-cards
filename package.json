@@ -1,6 +1,6 @@
 {
   "name": "react-native-swipe-cards",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Swipe cards for stylishly passing & failing a card",
   "main": "SwipeCards.js",
   "scripts": {
