@@ -16,11 +16,14 @@ jobs:
         with:
           ref: ${{ github.ref }}
            
-      - name: Tag
-        run: echo "RELEASE_VERSION=$(git tag --points-at HEAD)" >> $GITHUB_ENV
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
            
       - name: Update version in package.json
-        run: npm version --no-git-tag-version "${{ env.RELEASE_VERSION }}"
+        run: npm version --no-git-tag-version "${{ steps.get_release.outputs.tag_name }}"
 
       - name: Commit and push changes
         uses: devops-infra/action-commit-push@master
@@ -28,3 +31,23 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           target_branch: master
           commit_message: Updated version in package.json
+          
+      - name: Delete last release
+      - uses: dev-drprasad/delete-tag-and-release@v0.1.2
+        with:
+          delete_release: true # default: false
+          tag_name: "${{ steps.get_release.outputs.tag_name }}" # tag name to delete
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ steps.get_release.outputs.tag_name }}
+          release_name: Release ${{ v }}
+          body: ${{steps.get_release.outputs.body}}
+          draft: false
+          prerelease: false
