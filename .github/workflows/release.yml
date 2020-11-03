@@ -40,10 +40,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          ref: master
+      - name: Switch to master branch
+        run: git checkout master
           
       - name: Create Release
         uses: actions/create-release@v1
