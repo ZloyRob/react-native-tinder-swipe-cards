@@ -17,8 +17,8 @@ jobs:
           ref: ${{ github.ref }}
            
       - name: Get release
-        id: get_release
         uses: bruceadams/get-release@v1.2.2
+        id: get_release
         env:
           GITHUB_TOKEN: ${{ github.token }}
            
@@ -41,13 +41,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Create Release
-        id: create_release
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        id: create_release
         with:
           tag_name: ${{ steps.get_release.outputs.tag_name }}
           release_name: Release ${{ v }}
           body: ${{steps.get_release.outputs.body}}
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
