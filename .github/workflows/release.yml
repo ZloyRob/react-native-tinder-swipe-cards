@@ -17,10 +17,10 @@ jobs:
           ref: ${{ github.ref }}
            
       - name: Tag
-        run: echo "$(git tag --points-at HEAD)"
+        run: echo "RELEASE_VERSION=$(git tag --points-at HEAD)" >> $GITHUB_ENV
            
       - name: Update version in package.json
-        run: npm version --no-git-tag-version "$(git tag --points-at HEAD)"
+        run: npm version --no-git-tag-version "${{ env.RELEASE_VERSION }}"
 
       - name: Commit and push changes
         uses: devops-infra/action-commit-push@master
