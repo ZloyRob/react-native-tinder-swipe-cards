@@ -26,4 +26,5 @@ jobs:
         uses: devops-infra/action-commit-push@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          target_branch: master
           commit_message: Updated version in package.json
